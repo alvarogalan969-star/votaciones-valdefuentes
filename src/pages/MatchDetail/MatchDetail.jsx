@@ -85,8 +85,6 @@ export default function MatchDetail() {
         } else {
           voter = newVoter;
         }
-
-        voter = newVoter;
       }
 
       setVoterId(voter.id);
@@ -133,8 +131,19 @@ export default function MatchDetail() {
 
       setHasVoted(voteCheck && voteCheck.length > 0);
 
-      // 7. si la votación está cerrada, cargar ranking
-      if (!sessionData.is_open) {
+      // 7. si la votación está cerrada (por fecha), cargar ranking
+      const now = new Date();
+      const opensAt = sessionData.opens_at
+        ? new Date(sessionData.opens_at)
+        : null;
+      const closesAt = sessionData.closes_at
+        ? new Date(sessionData.closes_at)
+        : null;
+
+      const isClosedByTime =
+        opensAt && closesAt ? now > closesAt : false;
+
+      if (isClosedByTime) {
         const { data: votesData } = await supabase
           .from("votes")
           .select("player_id, type, points, players(name)")
@@ -180,7 +189,27 @@ export default function MatchDetail() {
   if (loading) return <p>Cargando...</p>;
   if (!match) return <p>Partido no encontrado</p>;
 
-  const isOpen = session && session.is_open;
+  if (!session) {
+    return (
+      <div>
+        <h2>
+          Partido: {match.date} — {match.rival}
+        </h2>
+        <p>Este partido no tiene votación configurada.</p>
+      </div>
+    );
+  }
+
+  const now = new Date();
+  const opensAt = session.opens_at ? new Date(session.opens_at) : null;
+  const closesAt = session.closes_at ? new Date(session.closes_at) : null;
+
+  const isPending =
+    opensAt && closesAt ? now < opensAt : false;
+  const isOpen =
+    opensAt && closesAt ? now >= opensAt && now <= closesAt : false;
+  const isClosed =
+    opensAt && closesAt ? now > closesAt : false;
 
   return (
     <div>
@@ -188,7 +217,11 @@ export default function MatchDetail() {
         Partido: {match.date} — {match.rival}
       </h2>
 
-      {isOpen ? (
+      {isPending && (
+        <p>La votación todavía no está abierta.</p>
+      )}
+
+      {isOpen && (
         hasVoted ? (
           <p>Ya has enviado tus votos para este partido.</p>
         ) : (
@@ -199,7 +232,9 @@ export default function MatchDetail() {
             onSuccess={() => navigate(`/partidos/${matchId}/gracias`)}
           />
         )
-      ) : (
+      )}
+
+      {isClosed && (
         <>
           <p>La votación está cerrada.</p>
 
