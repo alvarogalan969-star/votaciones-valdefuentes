@@ -14,8 +14,12 @@ export default function Matches() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        navigate("/login");
-        return;
+        // reintento rápido por si viene de magic link
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session?.user) {
+          navigate("/login");
+          return;
+        }
       }
 
       const { data, error } = await supabase
