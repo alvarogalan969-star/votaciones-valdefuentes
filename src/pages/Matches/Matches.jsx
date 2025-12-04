@@ -37,6 +37,9 @@ export default function Matches() {
 
   return (
     <div>
+      <button onClick={() => navigate("/admin")}>
+        Administración
+      </button>
       <button onClick={() => navigate("/clasificacion")}>
         Ver clasificación global
       </button>

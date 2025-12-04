@@ -4,6 +4,7 @@ import Matches from "./pages/Matches/Matches.jsx";
 import MatchDetail from "./pages/MatchDetail/MatchDetail.jsx";
 import Thanks from "./pages/Thanks/Thanks.jsx";
 import GlobalRanking from "./pages/GlobalRanking/GlobalRanking.jsx";
+import Admin from "./pages/Admin/Admin.jsx";
 
 export default function AppRouter() {
   return (
@@ -15,6 +16,7 @@ export default function AppRouter() {
         <Route path="*" element={<Navigate to="/partidos" />} />
         <Route path="/partidos/:id/gracias" element={<Thanks />} />
         <Route path="/clasificacion" element={<GlobalRanking />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </BrowserRouter>
   );
