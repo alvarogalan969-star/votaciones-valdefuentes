@@ -37,6 +37,9 @@ export default function Matches() {
 
   return (
     <div>
+      <button onClick={() => navigate("/clasificacion")}>
+        Ver clasificación global
+      </button>
       <h2>Partidos</h2>
       <ul>
         {matches.map((m) => {
