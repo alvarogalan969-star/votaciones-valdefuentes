@@ -5,7 +5,6 @@ import MatchDetail from "./pages/MatchDetail/MatchDetail.jsx";
 import Thanks from "./pages/Thanks/Thanks.jsx";
 import GlobalRanking from "./pages/GlobalRanking/GlobalRanking.jsx";
 import Admin from "./pages/Admin/Admin.jsx";
-import AuthCallback from "./pages/AuthCallback/AuthCallback";
 
 export default function AppRouter() {
   return (
@@ -18,7 +17,6 @@ export default function AppRouter() {
         <Route path="/partidos/:id/gracias" element={<Thanks />} />
         <Route path="/clasificacion" element={<GlobalRanking />} />
         <Route path="/admin" element={<Admin />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
     </BrowserRouter>
   );
