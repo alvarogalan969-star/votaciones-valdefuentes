@@ -9,18 +9,19 @@ export default function Matches() {
 
   useEffect(() => {
     const load = async () => {
-      // comprobar usuario logueado
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         navigate("/login");
         return;
       }
 
-      // cargar partidos + sesión de voto
       const { data, error } = await supabase
         .from("matches")
         .select("id, date, rival, vote_sessions(id, opens_at, closes_at)")
-        .order("date", { ascending: false });
+        .order("date", { ascending: true });
 
       if (error) {
         console.error(error);
@@ -33,44 +34,120 @@ export default function Matches() {
     load();
   }, [navigate]);
 
-  if (loading) return <p>Cargando...</p>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-950 to-red-700 text-slate-100">
+        <p className="text-sm text-slate-300">Cargando partidos...</p>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <button onClick={() => navigate("/admin")}>
-        Administración
-      </button>
-      <button onClick={() => navigate("/clasificacion")}>
-        Ver clasificación global
-      </button>
-      <h2>Partidos</h2>
-      <ul>
-        {matches.map((m) => {
-          const session = Array.isArray(m.vote_sessions)
-            ? m.vote_sessions[0]
-            : m.vote_sessions || null;
+    <div className="min-h-screen bg-gradient-to-br from-black via-slate-950 to-red-700 text-slate-100">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+        {/* Header superior */}
+        <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-red-400">
+              Valdefuentes
+            </p>
+            <h1 className="mt-2 text-2xl md:text-3xl font-semibold text-white">
+              Partidos
+            </h1>
+            <p className="mt-1 text-sm text-slate-300 max-w-xl">
+              Selecciona un partido para ver los detalles y realizar tu
+              votación.
+            </p>
+          </div>
 
-          let label = "(sin votación)";
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => navigate("/clasificacion")}
+              className="rounded-full border border-slate-700 bg-black/60 px-4 py-2 text-xs font-medium text-slate-100 hover:border-red-500 hover:bg-black/80 transition"
+            >
+              Ver clasificación global
+            </button>
+            <button
+              onClick={() => navigate("/admin")}
+              className="rounded-full border border-red-600 bg-red-600/90 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500 hover:border-red-500 transition"
+            >
+              Administración
+            </button>
+          </div>
+        </header>
 
-          if (session && session.opens_at && session.closes_at) {
-            const now = new Date();
-            const opensAt = new Date(session.opens_at);
-            const closesAt = new Date(session.closes_at);
+        {/* Grid de partidos */}
+        {matches.length === 0 ? (
+          <p className="mt-10 text-sm text-slate-300">
+            No hay partidos disponibles por el momento.
+          </p>
+        ) : (
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {matches.map((m) => {
+              const session = Array.isArray(m.vote_sessions)
+                ? m.vote_sessions[0]
+                : m.vote_sessions || null;
 
-            if (now < opensAt) label = "(votación pendiente)";
-            else if (now >= opensAt && now <= closesAt) label = "(votación abierta)";
-            else if (now > closesAt) label = "(votación cerrada)";
-          }
+              let label = "(sin votación)";
+              let statusClass =
+                "bg-slate-900/70 border border-slate-700 text-slate-300";
 
-          return (
-            <li key={m.id}>
-              <button onClick={() => navigate(`/partidos/${m.id}`)}>
-                {m.date} — {m.rival} {label}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+              if (session && session.opens_at && session.closes_at) {
+                const now = new Date();
+                const opensAt = new Date(session.opens_at);
+                const closesAt = new Date(session.closes_at);
+
+                if (now < opensAt) {
+                  label = "Votación pendiente";
+                  statusClass =
+                    "bg-amber-900/50 border border-amber-700 text-amber-200";
+                } else if (now >= opensAt && now <= closesAt) {
+                  label = "Votación abierta";
+                  statusClass =
+                    "bg-emerald-900/50 border border-emerald-600 text-emerald-200";
+                } else if (now > closesAt) {
+                  label = "Votación cerrada";
+                  statusClass =
+                    "bg-slate-900/70 border border-slate-600 text-slate-200";
+                }
+              }
+
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => navigate(`/partidos/${m.id}`)}
+                  className="group text-left rounded-2xl bg-black/60 border border-slate-800 px-5 py-4 shadow-lg shadow-black/40 hover:border-red-500/70 hover:bg-black/80 transition flex flex-col gap-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
+                      Partido
+                    </p>
+                    <span className={`text-[11px] px-2 py-1 rounded-full ${statusClass}`}>
+                      {label}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      {m.rival}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">{m.date}</p>
+                  </div>
+
+                  <div className="mt-1 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">
+                      Pulsa para ver detalles
+                    </span>
+                    <span className="font-medium text-red-400 group-hover:text-red-300">
+                      Ver partido →
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

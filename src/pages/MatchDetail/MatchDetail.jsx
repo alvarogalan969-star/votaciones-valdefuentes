@@ -106,7 +106,6 @@ export default function MatchDetail() {
       setSession(sessionData);
 
       if (!sessionData) {
-        // No hay sesión de voto creada para este partido
         setSession(null);
         setHasVoted(false);
         setLoading(false);
@@ -170,7 +169,6 @@ export default function MatchDetail() {
             (a, b) => b.points - a.points
           );
 
-          // peores: puntos negativos → más negativo = peor
           const worstArr = Array.from(worstMap.values()).sort(
             (a, b) => a.points - b.points
           );
@@ -186,85 +184,242 @@ export default function MatchDetail() {
     load();
   }, [matchId, navigate]);
 
-  if (loading) return <p>Cargando...</p>;
-  if (!match) return <p>Partido no encontrado</p>;
-
-  if (!session) {
+  if (loading) {
     return (
-      <div>
-        <h2>
-          Partido: {match.date} — {match.rival}
-        </h2>
-        <p>Este partido no tiene votación configurada.</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-950 to-red-700 text-slate-100">
+        <p className="text-sm text-slate-300">Cargando partido...</p>
       </div>
     );
   }
 
+  if (!match) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-950 to-red-700 text-slate-100">
+        <div className="mx-auto max-w-md px-4 text-center">
+          <p className="text-sm text-slate-200 mb-4">
+            Partido no encontrado.
+          </p>
+          <button
+            onClick={() => navigate("/partidos")}
+            className="inline-flex items-center text-xs font-medium text-red-300 hover:text-red-200"
+          >
+            ← Volver a partidos
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Si no hay sesión
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-slate-950 to-red-700 text-slate-100">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+          <div className="mb-6">
+            <button
+              onClick={() => navigate("/partidos")}
+              className="inline-flex items-center text-xs font-medium text-slate-300 hover:text-white"
+            >
+              ← Volver a partidos
+            </button>
+          </div>
+
+          <div className="rounded-2xl bg-black/70 border border-slate-800 px-6 py-6 shadow-xl">
+            <h2 className="text-xl md:text-2xl font-semibold text-white mb-2">
+              Partido: {match.date} — {match.rival}
+            </h2>
+            <p className="text-sm text-slate-300 mt-3">
+              Este partido no tiene votación configurada.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Estados de votación
   const now = new Date();
   const opensAt = session.opens_at ? new Date(session.opens_at) : null;
   const closesAt = session.closes_at ? new Date(session.closes_at) : null;
 
-  const isPending =
-    opensAt && closesAt ? now < opensAt : false;
-  const isOpen =
-    opensAt && closesAt ? now >= opensAt && now <= closesAt : false;
-  const isClosed =
-    opensAt && closesAt ? now > closesAt : false;
+  const isPending = opensAt && closesAt ? now < opensAt : false;
+  const isOpen = opensAt && closesAt ? now >= opensAt && now <= closesAt : false;
+  const isClosed = opensAt && closesAt ? now > closesAt : false;
+
+  let statusLabel = "Sin estado";
+  let statusClass =
+    "bg-slate-900/70 border border-slate-700 text-slate-300";
+
+  if (isPending) {
+    statusLabel = "Votación pendiente";
+    statusClass =
+      "bg-amber-900/50 border border-amber-700 text-amber-200";
+  } else if (isOpen) {
+    statusLabel = "Votación abierta";
+    statusClass =
+      "bg-emerald-900/50 border border-emerald-600 text-emerald-200";
+  } else if (isClosed) {
+    statusLabel = "Votación cerrada";
+    statusClass =
+      "bg-slate-900/70 border border-slate-600 text-slate-200";
+  }
 
   return (
-    <div>
-      <h2>
-        Partido: {match.date} — {match.rival}
-      </h2>
+    <div className="min-h-screen bg-gradient-to-br from-black via-slate-950 to-red-700 text-slate-100">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+        {/* Barra superior */}
+        <div className="flex items-center justify-between gap-3 mb-8">
+          <button
+            onClick={() => navigate("/partidos")}
+            className="inline-flex items-center text-xs font-medium text-slate-300 hover:text-white"
+          >
+            ← Volver a partidos
+          </button>
+          <button
+            onClick={() => navigate("/clasificacion")}
+            className="rounded-full border border-slate-700 bg-black/60 px-4 py-2 text-xs font-medium text-slate-100 hover:border-red-500 hover:bg-black/80 transition"
+          >
+            Ver clasificación global
+          </button>
+        </div>
 
-      {isPending && (
-        <p>La votación todavía no está abierta.</p>
-      )}
+        {/* Cabecera */}
+        <header className="mb-8">
+          <p className="text-xs uppercase tracking-[0.3em] text-red-400">
+            Valdefuentes
+          </p>
+          <h1 className="mt-2 text-2xl md:text-3xl font-semibold text-white">
+            Partido: {match.date} — {match.rival}
+          </h1>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+            <span className={`px-3 py-1 rounded-full ${statusClass}`}>
+              {statusLabel}
+            </span>
+          </div>
+        </header>
 
-      {isOpen && (
-        hasVoted ? (
-          <p>Ya has enviado tus votos para este partido.</p>
-        ) : (
-          <VoteForm
-            players={players}
-            sessionId={session.id}
-            voterId={voterId}
-            onSuccess={() => navigate(`/partidos/${matchId}/gracias`)}
-          />
-        )
-      )}
+        {/* Contenido según estado */}
+        {isPending && (
+          <div className="rounded-2xl bg-black/70 border border-slate-800 px-6 py-6 shadow-xl">
+            <p className="text-sm text-slate-300">
+              La votación todavía no está abierta.
+            </p>
+          </div>
+        )}
 
-      {isClosed && (
-        <>
-          <p>La votación está cerrada.</p>
+        {isOpen && (
+          <div className="grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+            {/* Info partido */}
+            <section className="rounded-2xl bg-black/70 border border-slate-800 px-6 py-6 shadow-xl">
+              <h2 className="text-sm font-semibold text-white mb-4">
+                Detalles del partido
+              </h2>
+              <p className="text-sm text-slate-300">
+                Rival:{" "}
+                <span className="font-medium text-white">
+                  {match.rival}
+                </span>
+              </p>
+              <p className="mt-2 text-sm text-slate-300">
+                Fecha:{" "}
+                <span className="font-medium text-white">
+                  {match.date}
+                </span>
+              </p>
+            </section>
 
-          <h3>Top 3 mejores</h3>
-          {bestTop.length === 0 ? (
-            <p>No hay votos.</p>
-          ) : (
-            <ol>
-              {bestTop.map((p) => (
-                <li key={p.name}>
-                  {p.name} — {p.points} pts
-                </li>
-              ))}
-            </ol>
-          )}
+            {/* Formulario / mensaje */}
+            <section className="rounded-2xl bg-black/70 border border-slate-800 px-6 py-8 shadow-xl">
+              <h2 className="text-base font-semibold text-white mb-5">
+                Tu votación
+              </h2>
 
-          <h3>Top 3 peores</h3>
-          {worstTop.length === 0 ? (
-            <p>No hay votos.</p>
-          ) : (
-            <ol>
-              {worstTop.map((p) => (
-                <li key={p.name}>
-                  {p.name} — {p.points} pts
-                </li>
-              ))}
-            </ol>
-          )}
-        </>
-      )}
+              {hasVoted ? (
+                <p className="text-sm text-slate-300">
+                  Ya has enviado tus votos para este partido.
+                </p>
+              ) : (
+                <VoteForm
+                  players={players}
+                  sessionId={session.id}
+                  voterId={voterId}
+                  onSuccess={() => navigate(`/partidos/${matchId}/gracias`)}
+                />
+              )}
+            </section>
+          </div>
+        )}
+
+        {isClosed && (
+          <div className="space-y-6">
+            <div className="rounded-2xl bg-black/70 border border-slate-800 px-6 py-6 shadow-xl">
+              <p className="text-sm text-slate-300">
+                La votación está cerrada.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Top mejores */}
+              <section className="rounded-2xl bg-black/70 border border-slate-800 px-6 py-6 shadow-xl">
+                <h3 className="text-sm font-semibold text-white mb-4">
+                  Top 3 mejores
+                </h3>
+                {bestTop.length === 0 ? (
+                  <p className="text-sm text-slate-300">No hay votos.</p>
+                ) : (
+                  <ol className="space-y-2 text-sm">
+                    {bestTop.map((p, idx) => (
+                      <li
+                        key={p.name}
+                        className="flex items-center justify-between text-slate-200"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-xs text-slate-500 w-4">
+                            #{idx + 1}
+                          </span>
+                          {p.name}
+                        </span>
+                        <span className="text-xs font-medium text-emerald-300">
+                          {p.points} pts
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
+
+              {/* Top peores */}
+              <section className="rounded-2xl bg-black/70 border border-slate-800 px-6 py-6 shadow-xl">
+                <h3 className="text-sm font-semibold text-white mb-4">
+                  Top 3 peores
+                </h3>
+                {worstTop.length === 0 ? (
+                  <p className="text-sm text-slate-300">No hay votos.</p>
+                ) : (
+                  <ol className="space-y-2 text-sm">
+                    {worstTop.map((p, idx) => (
+                      <li
+                        key={p.name}
+                        className="flex items-center justify-between text-slate-200"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-xs text-slate-500 w-4">
+                            #{idx + 1}
+                          </span>
+                          {p.name}
+                        </span>
+                        <span className="text-xs font-medium text-red-300">
+                          {p.points} pts
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
