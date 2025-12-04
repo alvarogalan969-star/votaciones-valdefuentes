@@ -24,7 +24,7 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: "http://localhost:5173/partidos",
+        emailRedirectTo: "`${window.location.origin}/partidos",
       },
     });
 
