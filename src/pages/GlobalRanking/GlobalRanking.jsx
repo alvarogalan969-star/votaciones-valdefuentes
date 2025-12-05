@@ -18,9 +18,12 @@ export default function GlobalRanking() {
         return;
       }
 
+      const nowIso = new Date().toISOString();
+
       const { data: votes, error } = await supabase
         .from("votes")
-        .select("player_id, points, players(name)");
+        .select("player_id, points, players(name), vote_sessions!inner(closes_at)")
+        .lt("vote_sessions.closes_at", nowIso);
 
       if (error) {
         console.error(error);
