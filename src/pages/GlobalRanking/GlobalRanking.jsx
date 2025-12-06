@@ -5,7 +5,6 @@ import { supabase } from "../../api/supabaseClient";
 export default function GlobalRanking() {
   const [rows, setRows] = useState([]);
   const [matchesCols, setMatchesCols] = useState([]);
-  const [totalsRow, setTotalsRow] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -74,7 +73,6 @@ export default function GlobalRanking() {
       const pointsByPlayerAndMatch = new Map(); // key `${playerId}-${matchId}`
       const totalByPlayer = new Map();
       const totalByMatch = new Map();
-      let globalTotal = 0;
 
       for (const v of votes) {
         const matchId = v.vote_sessions?.match_id;
@@ -94,7 +92,6 @@ export default function GlobalRanking() {
           (totalByMatch.get(matchId) || 0) + v.points
         );
 
-        globalTotal += v.points;
       }
 
       // Filas por jugador (eje Y)
@@ -120,16 +117,8 @@ export default function GlobalRanking() {
         return a.name.localeCompare(b.name);
       });
 
-      // Primera fila: totales globales
-      const totalsRowData = {
-        label: "Totales",
-        total: globalTotal,
-        perMatch: matchesColsOrdered.map((m) => totalByMatch.get(m.id) || 0),
-      };
-
       setMatchesCols(matchesColsOrdered);
       setRows(rankingRows);
-      setTotalsRow(totalsRowData);
       setLoading(false);
     };
 
@@ -203,30 +192,7 @@ export default function GlobalRanking() {
                 </tr>
               </thead>
               <tbody>
-                {/* Primera fila: totales globales */}
-                {totalsRow && (
-                  <tr className="border-b border-slate-900/80 bg-slate-900/40">
-                    <td className="py-2 pr-4 text-slate-400 text-[11px]">
-                      —
-                    </td>
-                    <td className="py-2 pr-4 font-semibold text-slate-100 text-[11px]">
-                      {totalsRow.label}
-                    </td>
-                    <td className="py-2 pr-4 text-right">
-                      <span className="inline-flex rounded-full px-3 py-1 text-[11px] font-semibold bg-slate-900/70 text-slate-100">
-                        {totalsRow.total} pts
-                      </span>
-                    </td>
-                    {totalsRow.perMatch.map((value, idx) => (
-                      <td key={idx} className="py-2 px-2 text-right">
-                        <span className="inline-flex rounded-full px-2.5 py-1 text-[11px] bg-slate-900/70 text-slate-100">
-                          {value}
-                        </span>
-                      </td>
-                    ))}
-                  </tr>
-                )}
-
+                
                 {/* Filas por jugador */}
                 {rows.map((r, idx) => (
                   <tr
