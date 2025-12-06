@@ -20,33 +20,44 @@ export default function GlobalRanking() {
 
       const nowIso = new Date().toISOString();
 
-      const { data: votes, error } = await supabase
-        .from("votes")
-        .select("player_id, points, players(name), vote_sessions!inner(closes_at)")
-        .lt("vote_sessions.closes_at", nowIso);
+      // 1) Jugadores + 2) Votos de sesiones cerradas
+      const [playersRes, votesRes] = await Promise.all([
+        supabase.from("players").select("id, name").order("name", { ascending: true }),
+        supabase
+          .from("votes")
+          .select("player_id, points, vote_sessions!inner(closes_at)")
+          .lt("vote_sessions.closes_at", nowIso),
+      ]);
 
-      if (error) {
-        console.error(error);
+      if (playersRes.error || votesRes.error) {
+        console.error(playersRes.error || votesRes.error);
         setLoading(false);
         return;
       }
 
-      const map = new Map();
+      const players = playersRes.data || [];
+      const votes = votesRes.data || [];
 
-      for (const v of votes || []) {
-        const key = v.player_id;
-        const name = v.players?.name || "Desconocido";
-        const prev = map.get(key) || { name, total: 0 };
-
-        map.set(key, {
-          name,
-          total: prev.total + v.points,
-        });
+      // Sumar puntos por jugador_id
+      const totalsById = new Map();
+      for (const v of votes) {
+        if (!v.player_id || v.points == null) continue;
+        const prev = totalsById.get(v.player_id) || 0;
+        totalsById.set(v.player_id, prev + v.points);
       }
 
-      const arr = Array.from(map.values()).sort(
-        (a, b) => b.total - a.total
-      );
+      // Construir filas para TODOS los jugadores
+      const arr = players.map((p) => ({
+        id: p.id,
+        name: p.name,
+        total: totalsById.get(p.id) || 0,
+      }));
+
+      // Ordenar por puntos desc y luego nombre
+      arr.sort((a, b) => {
+        if (b.total !== a.total) return b.total - a.total;
+        return a.name.localeCompare(b.name);
+      });
 
       setRows(arr);
       setLoading(false);
@@ -111,7 +122,7 @@ export default function GlobalRanking() {
                 <tbody>
                   {rows.map((r, idx) => (
                     <tr
-                      key={r.name}
+                      key={r.id}
                       className="border-b border-slate-900/70 last:border-b-0"
                     >
                       <td className="py-2 pr-4 text-slate-300">
