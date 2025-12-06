@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../api/supabaseClient";
+import { ADMIN_EMAIL } from "../../config/admin";
 
 export default function Matches() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [authUser, setAuthUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,6 +23,21 @@ export default function Matches() {
           return;
         }
       }
+
+       let currentUser = user;
+
+      if (!currentUser) {
+       // reintento rápido por si viene de magic link
+        const { data: sessionData } = await supabase.auth.getSession();
+        currentUser = sessionData?.session?.user ?? null;
+
+        if (!currentUser) {
+          navigate("/login");
+          return;
+        }
+      }
+
+      setAuthUser(currentUser);
 
       const { data, error } = await supabase
         .from("matches")
@@ -45,6 +62,8 @@ export default function Matches() {
       </div>
     );
   }
+
+  const isAdmin = authUser?.email === ADMIN_EMAIL;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-slate-950 to-red-700 text-slate-100">
@@ -71,12 +90,14 @@ export default function Matches() {
             >
               Ver clasificación global
             </button>
-            <button
-              onClick={() => navigate("/admin")}
-              className="rounded-full border border-red-600 bg-red-600/90 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500 hover:border-red-500 transition"
-            >
-              Administración
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => navigate("/admin")}
+                className="rounded-full border border-red-600 bg-red-600/90 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500 hover:border-red-500 transition"
+              >
+                Administración
+              </button>
+            )}
           </div>
         </header>
 
