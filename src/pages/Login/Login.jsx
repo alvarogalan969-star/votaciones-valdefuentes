@@ -20,16 +20,38 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+    setSent(false);
 
-    const { error } = await supabase.auth.signInWithOtp({
+    // 1) Comprobar si el email está en allowed_voters
+    const { data, error } = await supabase
+      .from("allowed_voters")
+      .select("id, is_active")
+      .eq("email", email)
+      .maybeSingle(); // null si no existe
+
+    if (error) {
+      console.error(error);
+      setErrorMsg("Ha ocurrido un error comprobando el correo.");
+      return;
+    }
+
+    // 2) Si no existe o está inactivo → rechazo, NO se envía mail
+    if (!data || data.is_active === false) {
+      setErrorMsg("Este correo no está autorizado para votar.");
+      return;
+    }
+
+    // 3) Si está permitido, enviamos el Magic Link
+    const { error: loginError } = await supabase.auth.signInWithOtp({
       email,
       options: {
         emailRedirectTo: `${window.location.origin}/partidos`,
       },
     });
 
-    if (error) {
-      setErrorMsg(error.message);
+    if (loginError) {
+      console.error(loginError);
+      setErrorMsg("No se ha podido enviar el enlace. Inténtalo más tarde.");
       return;
     }
 
