@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../api/supabaseClient";
-import { ADMIN_EMAIL } from "../config/admin";
+import { ADMIN_EMAIL } from "../../config/admin";
 
 export default function Admin() {
   const navigate = useNavigate();
