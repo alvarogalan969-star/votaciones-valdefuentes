@@ -57,7 +57,7 @@ export default function Matches() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-950 to-red-700 text-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-black text-slate-100">
         <p className="text-sm text-slate-300">Cargando partidos...</p>
       </div>
     );
@@ -141,7 +141,7 @@ export default function Matches() {
                 <button
                   key={m.id}
                   onClick={() => navigate(`/partidos/${m.id}`)}
-                  className="group text-left rounded-2xl bg-black/60 border border-slate-800 px-5 py-4 shadow-lg shadow-black/40 hover:border-red-500/70 hover:bg-black/80 transition flex flex-col gap-3"
+                  className="group text-left rounded-2xl bg-black border border-slate-800 px-5 py-4 shadow-lg shadow-black/40 hover:border-red-500/70 hover:bg-black/80 transition flex flex-col gap-3"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
