@@ -66,7 +66,7 @@ export default function Matches() {
   const isAdmin = authUser?.email === ADMIN_EMAIL;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-slate-950 to-red-700 text-slate-100">
+    <div className="min-h-screen bg-black text-slate-100">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 md:py-16">
         {/* Header superior */}
         <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
