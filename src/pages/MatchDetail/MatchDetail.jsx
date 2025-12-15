@@ -149,32 +149,27 @@ export default function MatchDetail() {
           .eq("vote_session_id", sessionData.id);
 
         if (votesData) {
-          const bestMap = new Map();
-          const worstMap = new Map();
+          const totalsMap = new Map(); // player_id -> { name, total }
 
           for (const v of votesData) {
             const key = v.player_id;
             const name = v.players?.name || "Desconocido";
 
-            if (v.type === "best") {
-              const prev = bestMap.get(key)?.points || 0;
-              bestMap.set(key, { name, points: prev + v.points });
-            } else if (v.type === "worst") {
-              const prev = worstMap.get(key)?.points || 0;
-              worstMap.set(key, { name, points: prev + v.points });
-            }
+            // Si tus "worst" ya guardan points en negativo, esto suma bien.
+            // Si los "worst" se guardan en positivo, los convertimos a negativo:
+            const signedPoints = v.type === "worst" ? -Math.abs(v.points) : v.points;
+
+            const prev = totalsMap.get(key)?.total || 0;
+            totalsMap.set(key, { name, total: prev + signedPoints });
           }
 
-          const bestArr = Array.from(bestMap.values()).sort(
-            (a, b) => b.points - a.points
-          );
+          const totalsArr = Array.from(totalsMap.values());
 
-          const worstArr = Array.from(worstMap.values()).sort(
-            (a, b) => a.points - b.points
-          );
+          const bestArr = [...totalsArr].sort((a, b) => b.total - a.total);
+          const worstArr = [...totalsArr].sort((a, b) => a.total - b.total);
 
-          setBestTop(bestArr.slice(0, 3));
-          setWorstTop(worstArr.slice(0, 3));
+          setBestTop(bestArr.slice(0, 3).map(x => ({ name: x.name, points: x.total })));
+          setWorstTop(worstArr.slice(0, 3).map(x => ({ name: x.name, points: x.total })));
         }
       }
 
