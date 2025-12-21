@@ -40,7 +40,7 @@ export default function MatchDetail() {
         // buscar en allowed_voters
         const { data: allowed } = await supabase
           .from("allowed_voters")
-          .select("id")
+          .select("id, player_name")
           .eq("email", user.email)
           .eq("is_active", true)
           .maybeSingle();
@@ -178,6 +178,14 @@ export default function MatchDetail() {
 
     load();
   }, [matchId, navigate]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      window.location.reload();
+    }, 5 * 60 * 1000); // 5 minutos
+
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
